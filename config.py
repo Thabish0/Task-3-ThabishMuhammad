@@ -1,38 +1,21 @@
-# =============================================================================
-# config.py
-# Phishing Awareness Analysis System
-# Central configuration — all constants, thresholds, and keyword lists live here.
-# =============================================================================
-
 import os
 
-# ---------------------------------------------------------------------------
-# Application metadata
-# ---------------------------------------------------------------------------
 APP_NAME = "Phishing Awareness Analysis System"
 APP_VERSION = "1.0.0"
 APP_AUTHOR = "Security Tools"
 WINDOW_MIN_WIDTH = 1100
 WINDOW_MIN_HEIGHT = 720
 
-# ---------------------------------------------------------------------------
-# File / directory paths
-# ---------------------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 REPORTS_DIR = os.path.join(BASE_DIR, "reports")
 DB_PATH = os.path.join(DATA_DIR, "scan_history.db")
 
-# Ensure required directories exist on import
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
-# ---------------------------------------------------------------------------
-# Threat classification thresholds  (score out of 100)
-# ---------------------------------------------------------------------------
-SCORE_SAFE_MAX = 29          # 0 – 29  → Safe
-SCORE_SUSPICIOUS_MAX = 59    # 30 – 59 → Suspicious
-# 60 – 100 → Malicious
+SCORE_SAFE_MAX = 29          
+SCORE_SUSPICIOUS_MAX = 59   
 
 THREAT_SAFE = "Safe"
 THREAT_SUSPICIOUS = "Suspicious"
@@ -50,9 +33,6 @@ THREAT_BG_COLORS = {
     THREAT_MALICIOUS: "#fdedec",
 }
 
-# ---------------------------------------------------------------------------
-# Scoring weights
-# ---------------------------------------------------------------------------
 WEIGHT_KEYWORD = 5          # points per matched phishing keyword
 WEIGHT_URGENT_KEYWORD = 8   # points per high-urgency keyword
 WEIGHT_URL = 6              # points per suspicious URL detected
@@ -62,11 +42,6 @@ WEIGHT_SENDER = 12          # points for suspicious sender domain
 
 MAX_SCORE = 100             # score is clamped to this ceiling
 
-# ---------------------------------------------------------------------------
-# Phishing keyword lists
-# ---------------------------------------------------------------------------
-
-# Standard phishing / social-engineering keywords
 PHISHING_KEYWORDS = [
     "verify your account",
     "confirm your identity",
@@ -115,7 +90,7 @@ PHISHING_KEYWORDS = [
     "legal action",
 ]
 
-# High-urgency keywords (weighted more heavily)
+
 URGENT_KEYWORDS = [
     "urgent",
     "immediately",
@@ -137,11 +112,6 @@ URGENT_KEYWORDS = [
     "security breach",
 ]
 
-# ---------------------------------------------------------------------------
-# URL / domain analysis
-# ---------------------------------------------------------------------------
-
-# Domains commonly impersonated in phishing attacks
 SUSPICIOUS_DOMAINS = [
     "paypa1.com",
     "paypa-l.com",
@@ -160,10 +130,8 @@ SUSPICIOUS_DOMAINS = [
     "verify-account.net",
 ]
 
-# TLDs associated with higher phishing risk
 SUSPICIOUS_TLDS = [".xyz", ".top", ".click", ".loan", ".work", ".gq", ".ml", ".tk", ".cf", ".ga"]
 
-# Legitimate domains used as anchors in sender validation
 TRUSTED_SENDER_DOMAINS = [
     "gmail.com",
     "yahoo.com",
@@ -182,9 +150,7 @@ TRUSTED_SENDER_DOMAINS = [
     "edu",
 ]
 
-# ---------------------------------------------------------------------------
-# Red-flag structural patterns (applied to full email text)
-# ---------------------------------------------------------------------------
+
 RED_FLAG_PATTERNS = {
     "Generic greeting detected": [
         r"\bdear\s+(customer|user|account\s*holder|member|client|valued\s*customer)\b",
@@ -210,15 +176,12 @@ RED_FLAG_PATTERNS = {
     "Excessive urgency language": [
         r"\b(urgent|immediately|right\s*now|act\s*now|expires?\s*(today|now|in\s*24)|within\s*24\s*hours)\b",
     ],
-    "Mismatched or suspicious sender domain": [],   # handled programmatically
+    "Mismatched or suspicious sender domain": [],   
     "Attachment-based threat indicator": [
         r"\b(open\s*the\s*attachment|attached\s*(invoice|document|file)|download\s*the\s*file)\b",
     ],
 }
 
-# ---------------------------------------------------------------------------
-# UI colour palette
-# ---------------------------------------------------------------------------
 COLOR_BG = "#f4f6f9"
 COLOR_PANEL = "#ffffff"
 COLOR_ACCENT = "#2c3e50"
@@ -238,9 +201,6 @@ FONT_SIZE_HEADING = 13
 FONT_SIZE_BODY = 11
 FONT_SIZE_SMALL = 9
 
-# ---------------------------------------------------------------------------
-# Report settings
-# ---------------------------------------------------------------------------
 REPORT_FILENAME_FORMAT = "phishing_report_{timestamp}.txt"
 REPORT_HEADER = f"""
 {'='*70}
@@ -249,10 +209,8 @@ REPORT_HEADER = f"""
 {'='*70}
 """
 
-# ---------------------------------------------------------------------------
-# History / database settings
-# ---------------------------------------------------------------------------
-MAX_HISTORY_DISPLAY = 50    # rows shown in the history panel at once
+
+MAX_HISTORY_DISPLAY = 50    
 
 # ---------------------------------------------------------------------------
 # Sample library metadata (content defined in sample_library.py)
