@@ -1,10 +1,3 @@
-# =============================================================================
-# dashboard.py
-# Phishing Awareness Analysis System
-# Main application window — input panel, results panel, history panel,
-# statistics bar, and all UI event wiring.
-# =============================================================================
-
 import os
 import tkinter as tk
 from tkinter import messagebox, scrolledtext, ttk
@@ -17,9 +10,6 @@ from report_generator import ReportGenerator
 from sample_library import SampleLibraryWindow
 
 
-# ---------------------------------------------------------------------------
-# Helper: rounded-looking card frame
-# ---------------------------------------------------------------------------
 
 def _card(parent, **kw) -> tk.Frame:
     defaults = dict(
@@ -34,9 +24,6 @@ def _card(parent, **kw) -> tk.Frame:
     return tk.Frame(parent, **defaults)
 
 
-# ---------------------------------------------------------------------------
-# Dashboard
-# ---------------------------------------------------------------------------
 
 class Dashboard:
     """
@@ -56,9 +43,7 @@ class Dashboard:
         self._refresh_stats()
         self._refresh_history()
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Root window configuration
-    # ─────────────────────────────────────────────────────────────────────────
+
 
     def _configure_root(self) -> None:
         self.root.title(f"{config.APP_NAME}  v{config.APP_VERSION}")
@@ -73,15 +58,11 @@ class Dashboard:
         except tk.TclError:
             self.root.attributes("-zoomed", True)   # Linux maximise
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Top-level UI construction
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _build_ui(self) -> None:
         self._build_title_bar()
         self._build_stats_bar()
 
-        # Main content area splits into left (input+results) and right (history)
         content = tk.Frame(self.root, bg=config.COLOR_BG)
         content.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 8))
 
@@ -96,7 +77,6 @@ class Dashboard:
         self._build_results_panel(left)
         self._build_history_panel(right)
 
-    # ── Title bar ─────────────────────────────────────────────────────────────
 
     def _build_title_bar(self) -> None:
         bar = tk.Frame(self.root, bg=config.COLOR_ACCENT, pady=0)
@@ -129,7 +109,6 @@ class Dashboard:
             fg="#95a5a6",
         ).pack(side=tk.RIGHT)
 
-    # ── Statistics bar ────────────────────────────────────────────────────────
 
     def _build_stats_bar(self) -> None:
         bar = tk.Frame(self.root, bg=config.COLOR_ACCENT_LIGHT, pady=6)
@@ -167,7 +146,6 @@ class Dashboard:
                 fg=colour,
             ).pack()
 
-    # ── Input panel ───────────────────────────────────────────────────────────
 
     def _build_input_panel(self, parent: tk.Frame) -> None:
         card = _card(parent)
@@ -301,7 +279,6 @@ class Dashboard:
         )
         self._content_text.pack(fill=tk.X)
 
-    # ── Results panel ─────────────────────────────────────────────────────────
 
     def _build_results_panel(self, parent: tk.Frame) -> None:
         card = _card(parent)
@@ -317,11 +294,9 @@ class Dashboard:
 
         ttk.Separator(card, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=(0, 10))
 
-        # Top row: Threat card + score gauge + quick metrics
         top = tk.Frame(card, bg=config.COLOR_PANEL)
         top.pack(fill=tk.X, pady=(0, 10))
 
-        # Threat classification badge
         self._threat_frame = tk.Frame(top, bg=config.THREAT_BG_COLORS[config.THREAT_SAFE],
                                       padx=20, pady=14,
                                       highlightbackground=config.THREAT_COLORS[config.THREAT_SAFE],
@@ -409,7 +384,6 @@ class Dashboard:
 
             metrics.columnconfigure(i, weight=1)
 
-        # Tabbed detail view
         nb = ttk.Notebook(card)
         nb.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
 
@@ -443,7 +417,6 @@ class Dashboard:
         txt.pack(fill=tk.BOTH, expand=True)
         return frame, txt
 
-    # ── History panel ─────────────────────────────────────────────────────────
 
     def _build_history_panel(self, parent: tk.Frame) -> None:
         card = _card(parent, padx=10)
@@ -489,7 +462,6 @@ class Dashboard:
 
         ttk.Separator(card, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=(0, 6))
 
-        # Search / filter row
         filter_frame = tk.Frame(card, bg=config.COLOR_PANEL)
         filter_frame.pack(fill=tk.X, pady=(0, 6))
 
@@ -517,7 +489,6 @@ class Dashboard:
             command=self._search_history,
         ).pack(side=tk.RIGHT, padx=(4, 0))
 
-        # Listbox
         lb_frame = tk.Frame(card, bg=config.COLOR_PANEL)
         lb_frame.pack(fill=tk.BOTH, expand=True)
 
@@ -541,7 +512,6 @@ class Dashboard:
         self._history_lb.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self._history_lb.bind("<Double-Button-1>", self._load_history_item)
 
-        # Tip
         tk.Label(
             card,
             text="Double-click a record to reload it.",
@@ -550,7 +520,6 @@ class Dashboard:
             fg=config.COLOR_TEXT_MUTED,
         ).pack(anchor=tk.W, pady=(4, 0))
 
-        # Summary report button
         tk.Button(
             card,
             text="📄  Export Summary Report",
@@ -566,9 +535,6 @@ class Dashboard:
 
         self._history_records: list[dict[str, Any]] = []
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Business logic – analysis
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _run_analysis(self) -> None:
         subject = self._subject_var.get().strip()
@@ -586,23 +552,17 @@ class Dashboard:
         result = self._analyzer.analyze(subject, sender, content)
         self._last_result = result.to_dict()
 
-        # Persist
         self._db.save_scan(result)
 
-        # Update UI
         self._update_results(self._last_result)
         self._refresh_stats()
         self._refresh_history()
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # UI update helpers
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _update_results(self, data: dict[str, Any]) -> None:
         level = data.get("threat_level", config.THREAT_SAFE)
         score = data.get("threat_score", 0)
 
-        # Threat badge
         colour    = config.THREAT_COLORS[level]
         bg_colour = config.THREAT_BG_COLORS[level]
         icons     = {config.THREAT_SAFE: "✓", config.THREAT_SUSPICIOUS: "⚠", config.THREAT_MALICIOUS: "✗"}
@@ -614,26 +574,21 @@ class Dashboard:
         self._threat_icon_lbl.configure(text=icons.get(level, "●"), bg=bg_colour, fg=colour)
         self._threat_lbl.configure(text=level.upper(), bg=bg_colour, fg=colour)
 
-        # Score
         self._score_lbl.configure(text=str(score), fg=colour)
 
-        # Score bar
         self._score_bar_canvas.delete("all")
         bar_w = int(160 * score / 100)
         self._score_bar_canvas.configure(bg=config.COLOR_BORDER)
         if bar_w > 0:
             self._score_bar_canvas.create_rectangle(0, 0, bar_w, 12, fill=colour, outline="")
 
-        # Quick metrics
         kw_count = len(data.get("keywords", []) or []) + len(data.get("urgent_keywords", []) or [])
         self._metric_vars["keywords"].set(str(kw_count))
         self._metric_vars["urls"].set(str(len(data.get("urls", []) or [])))
         self._metric_vars["redflags"].set(str(len(data.get("red_flags", []) or [])))
 
-        # Tab: Explanation
         self._set_text(self._tab_explanation, data.get("explanation", ""))
 
-        # Tab: Keywords
         kw_lines = []
         urgent = data.get("urgent_keywords", []) or []
         regular = data.get("keywords", []) or []
@@ -648,7 +603,6 @@ class Dashboard:
             kw_lines.append("No phishing keywords detected.")
         self._set_text(self._tab_keywords, "\n".join(kw_lines))
 
-        # Tab: URLs
         all_urls  = data.get("urls", []) or []
         susp_urls = data.get("suspicious_urls", []) or []
         url_lines = []
@@ -663,7 +617,6 @@ class Dashboard:
             url_lines.append("No URLs found in the email content.")
         self._set_text(self._tab_urls, "\n".join(url_lines))
 
-        # Tab: Red Flags
         flags = data.get("red_flags", []) or []
         rf_lines = []
         if flags:
@@ -673,7 +626,6 @@ class Dashboard:
             rf_lines.append("No structural red flags detected.")
         self._set_text(self._tab_redflags, "\n".join(rf_lines))
 
-        # Tab: Recommendations
         recs = data.get("recommendations", []) or []
         rec_lines = [f"  {i}. {r}" for i, r in enumerate(recs, 1)]
         self._set_text(self._tab_recs, "\n".join(rec_lines) if rec_lines else "No recommendations.")
@@ -685,18 +637,12 @@ class Dashboard:
         widget.insert(tk.END, text)
         widget.configure(state=tk.DISABLED)
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Statistics
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _refresh_stats(self) -> None:
         stats = self._db.get_statistics()
         for key, var in self._stat_vars.items():
             var.set(str(stats.get(key, 0)))
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # History panel
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _refresh_history(self, records: list[dict] | None = None) -> None:
         if records is None:
@@ -765,9 +711,6 @@ class Dashboard:
             parent=self.root,
         )
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Report generation
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _generate_report(self) -> None:
         if not self._last_result:
@@ -798,9 +741,6 @@ class Dashboard:
         except Exception:
             pass
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Clear
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _clear_all(self) -> None:
         self._subject_var.set("")
@@ -833,9 +773,7 @@ class Dashboard:
                     self._tab_urls, self._tab_redflags, self._tab_recs):
             self._set_text(tab, "")
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Sample library
-    # ─────────────────────────────────────────────────────────────────────────
+  
 
     def _open_sample_library(self) -> None:
         SampleLibraryWindow(self.root, on_load=self._load_sample)
