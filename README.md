@@ -105,41 +105,6 @@ The `data/` and `reports/` directories are created automatically on first launch
 
 ---
 
-## Detection Capabilities
-
-### Keyword detection
-Matches 44 standard phishing phrases (e.g. "verify your account", "click here immediately", "wire transfer") and 19 high-urgency phrases (e.g. "urgent", "account locked", "expires today").
-
-### URL analysis
-- Extracts all HTTP/HTTPS links from the email body
-- Flags IP-address-based URLs
-- Flags URL shorteners (bit.ly, tinyurl.com, t.co, etc.)
-- Detects known impersonating domains
-- Checks for risky TLDs (.xyz, .top, .click, .ml, .tk, etc.)
-- Identifies brand names embedded in suspicious subdomains
-- Flags excessive hyphens in hostnames
-
-### Red-flag detection
-Ten named structural checks applied via regular expressions:
-
-- Generic greeting detected
-- Requests for sensitive personal information
-- Threatening language detected
-- Impersonation of authority (IRS, FBI, government)
-- Promise of unrealistic reward
-- Shortened or obfuscated URL present
-- IP-address-based URL detected
-- Excessive urgency language
-- Mismatched or suspicious sender domain
-- Attachment-based threat indicator
-
-### Sender validation
-- Checks sender domain against a list of known phishing domains
-- Checks for high-risk TLDs
-- Detects brand impersonation in the domain (e.g. `paypa1-secure.com`)
-
----
-
 ## Report Format
 
 Each generated report contains seven sections:
