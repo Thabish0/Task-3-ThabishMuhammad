@@ -1,10 +1,3 @@
-# =============================================================================
-# analyzer.py
-# Phishing Awareness Analysis System
-# Core engine: keyword detection, URL extraction, red-flag checks,
-# threat scoring, classification, and explanation generation.
-# =============================================================================
-
 import re
 import urllib.parse
 from datetime import datetime
@@ -13,12 +6,8 @@ from typing import Any
 import config
 
 
-# ---------------------------------------------------------------------------
-# Data class – holds every result produced by one analysis run
-# ---------------------------------------------------------------------------
 
 class AnalysisResult:
-    """Plain-data container returned by PhishingAnalyzer.analyze()."""
 
     def __init__(self):
         self.timestamp: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -38,7 +27,6 @@ class AnalysisResult:
         self.explanation: str = ""
         self.recommendations: list[str] = []
 
-    # Convenience ─────────────────────────────────────────────────────────────
 
     def to_dict(self) -> dict[str, Any]:
         """Serialise to a plain dict (used by database.py and report_generator.py)."""
@@ -59,74 +47,49 @@ class AnalysisResult:
         }
 
 
-# ---------------------------------------------------------------------------
-# Main analyser class
-# ---------------------------------------------------------------------------
-
 class PhishingAnalyzer:
-    """
-    Stateless analysis engine.  Call analyze() with raw email fields;
-    get back a fully-populated AnalysisResult.
-    """
-
-    # URL regex – matches http / https links
+    
     _URL_RE = re.compile(
         r"https?://[^\s\]\[<>\"']+",
         re.IGNORECASE,
     )
 
-    # IP-address URL pattern
     _IP_URL_RE = re.compile(
         r"https?://\d{1,3}(\.\d{1,3}){3}",
         re.IGNORECASE,
     )
 
-    # URL shortener pattern
     _SHORT_URL_RE = re.compile(
         r"https?://(bit\.ly|tinyurl\.com|t\.co|goo\.gl|ow\.ly|buff\.ly"
         r"|rb\.gy|is\.gd|short\.io|tiny\.cc)/",
         re.IGNORECASE,
     )
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Public entry point
-    # ─────────────────────────────────────────────────────────────────────────
 
     def analyze(self, subject: str, sender: str, content: str) -> AnalysisResult:
-        """
-        Run all detection passes on the supplied email fields and return
-        a fully populated AnalysisResult.
-        """
+    
         result = AnalysisResult()
         result.subject = subject.strip()
         result.sender = sender.strip()
         result.content = content.strip()
 
-        # Build a single normalised text blob for pattern matching
         full_text = f"{result.subject} {result.sender} {result.content}".lower()
 
-        # --- detection passes ---
         score = 0
         score += self._check_keywords(full_text, result)
         score += self._check_urls(result.content, result)
         score += self._check_red_flags(full_text, result.sender, result)
         score += self._check_sender(result.sender, result)
 
-        # Clamp to ceiling
         result.threat_score = min(score, config.MAX_SCORE)
 
-        # --- classify ---
         result.threat_level = self._classify(result.threat_score)
 
-        # --- explain ---
         result.explanation = self._build_explanation(result)
         result.recommendations = self._build_recommendations(result)
 
         return result
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Detection passes
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _check_keywords(self, text: str, result: AnalysisResult) -> int:
         """Match phishing keywords and urgent keywords; return score delta."""
@@ -150,7 +113,7 @@ class PhishingAnalyzer:
         """Extract URLs and evaluate each one; return score delta."""
         score = 0
         urls = self._URL_RE.findall(content)
-        result.detected_urls = list(dict.fromkeys(urls))  # deduplicate, preserve order
+        result.detected_urls = list(dict.fromkeys(urls))  
 
         for url in result.detected_urls:
             suspicion, extra_score = self._evaluate_url(url)
@@ -165,7 +128,6 @@ class PhishingAnalyzer:
         score = 0
 
         for flag_name, patterns in config.RED_FLAG_PATTERNS.items():
-            # "Mismatched or suspicious sender domain" is handled in _check_sender
             if flag_name == "Mismatched or suspicious sender domain":
                 continue
             for pattern in patterns:
@@ -173,46 +135,38 @@ class PhishingAnalyzer:
                     if flag_name not in result.red_flags:
                         result.red_flags.append(flag_name)
                         score += config.WEIGHT_RED_FLAG
-                    break   # one match per flag is enough
+                    break 
 
         return score
 
     def _check_sender(self, sender: str, result: AnalysisResult) -> int:
-        """Evaluate the sender email address for spoofing signals; return score delta."""
         score = 0
         if not sender:
             return score
 
         sender_lower = sender.lower()
 
-        # Extract domain portion
         domain = ""
         if "@" in sender_lower:
             domain = sender_lower.split("@")[-1].strip()
         else:
-            # No @ at all – red flag
             result.red_flags.append("Mismatched or suspicious sender domain")
             return config.WEIGHT_SENDER
 
-        # Check for known suspicious/impersonating domains
         for bad_domain in config.SUSPICIOUS_DOMAINS:
             if bad_domain in domain:
                 result.red_flags.append("Mismatched or suspicious sender domain")
                 return config.WEIGHT_SENDER
 
-        # Check for suspicious TLDs
         for tld in config.SUSPICIOUS_TLDS:
             if domain.endswith(tld):
                 result.red_flags.append("Mismatched or suspicious sender domain")
                 score += config.WEIGHT_RED_FLAG
 
-        # Heuristic: domain contains numbers where a trusted brand does not
-        # e.g. "paypa1.com", "amaz0n-support.com"
         brand_keywords = ["paypal", "amazon", "apple", "microsoft", "google",
                           "facebook", "netflix", "bank", "secure", "support"]
         for brand in brand_keywords:
             if brand in domain:
-                # Legitimate: domain IS the exact trusted entry
                 is_trusted = any(domain == t or domain.endswith("." + t)
                                  for t in config.TRUSTED_SENDER_DOMAINS)
                 if not is_trusted:
@@ -223,9 +177,6 @@ class PhishingAnalyzer:
 
         return score
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # URL evaluation helper
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _evaluate_url(self, url: str) -> tuple[bool, int]:
         """
@@ -235,63 +186,50 @@ class PhishingAnalyzer:
         extra = 0
         url_lower = url.lower()
 
-        # IP-address URL
         if self._IP_URL_RE.match(url):
             return True, config.WEIGHT_MISLEADING_URL
 
-        # Shortened URL
         if self._SHORT_URL_RE.match(url):
             return True, 0
 
-        # Parse the URL properly
         try:
             parsed = urllib.parse.urlparse(url)
             hostname = parsed.hostname or ""
         except Exception:
-            return True, 0   # unparseable = suspicious
+            return True, 0  
 
-        # Known suspicious domain
+      
         for bad in config.SUSPICIOUS_DOMAINS:
             if bad in hostname:
                 return True, config.WEIGHT_MISLEADING_URL
 
-        # Suspicious TLD
         for tld in config.SUSPICIOUS_TLDS:
             if hostname.endswith(tld):
                 extra += 3
 
-        # Subdomain abuse: many subdomains often used in phishing
-        # e.g. secure.login.update.paypall.com
+      
         subdomain_parts = hostname.split(".")
         if len(subdomain_parts) > 4:
             extra += 2
 
-        # Legitimate brand name embedded in a different domain
         brand_keywords = ["paypal", "amazon", "apple", "microsoft", "google",
                           "facebook", "netflix", "bank", "secure", "update", "login"]
         sld = subdomain_parts[-2] if len(subdomain_parts) >= 2 else hostname
         for brand in brand_keywords:
             if brand in hostname and brand not in sld:
-                # brand appears in subdomain but not in the registered domain
                 return True, config.WEIGHT_MISLEADING_URL
 
-        # URL contains misleading characters (homoglyphs, excessive hyphens)
         if hostname.count("-") >= 3:
             extra += 2
 
-        # Numeric domain
         if re.match(r"^\d+\.\d+\.\d+\.\d+$", hostname):
             return True, config.WEIGHT_MISLEADING_URL
 
-        # If extra points were accumulated the URL is suspicious
         if extra > 0:
             return True, extra
 
         return False, 0
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Classification
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _classify(self, score: int) -> str:
         if score <= config.SCORE_SAFE_MAX:
@@ -300,9 +238,6 @@ class PhishingAnalyzer:
             return config.THREAT_SUSPICIOUS
         return config.THREAT_MALICIOUS
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Explanation generation
-    # ─────────────────────────────────────────────────────────────────────────
 
     def _build_explanation(self, result: AnalysisResult) -> str:
         lines: list[str] = []
@@ -310,7 +245,6 @@ class PhishingAnalyzer:
         level = result.threat_level
         score = result.threat_score
 
-        # Opening verdict
         if level == config.THREAT_SAFE:
             lines.append(
                 f"This email appears SAFE (threat score: {score}/100). "
@@ -332,7 +266,6 @@ class PhishingAnalyzer:
 
         lines.append("")
 
-        # Keyword findings
         all_kw = result.matched_keywords + result.matched_urgent_keywords
         if all_kw:
             lines.append(f"KEYWORD ANALYSIS ({len(all_kw)} match(es) found):")
@@ -353,7 +286,6 @@ class PhishingAnalyzer:
 
         lines.append("")
 
-        # URL findings
         if result.detected_urls:
             lines.append(f"URL ANALYSIS ({len(result.detected_urls)} URL(s) found):")
             if result.suspicious_urls:
@@ -372,7 +304,6 @@ class PhishingAnalyzer:
 
         lines.append("")
 
-        # Red flags
         if result.red_flags:
             lines.append(f"STRUCTURAL RED FLAGS ({len(result.red_flags)} detected):")
             for flag in result.red_flags:
@@ -382,7 +313,6 @@ class PhishingAnalyzer:
 
         lines.append("")
 
-        # Score breakdown
         lines.append("SCORE BREAKDOWN:")
         kw_score = (
             len(result.matched_keywords) * config.WEIGHT_KEYWORD
