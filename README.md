@@ -1,6 +1,6 @@
 # 🛡 Phishing Awareness Analysis System
 
-A desktop application for analysing emails and detecting phishing threats. Built entirely with Python's standard library — no third-party packages required.
+A desktop application for analysing emails and detecting phishing threats. Built entirely with Python's standard library.
 
 ---
 
