@@ -1,10 +1,3 @@
-# =============================================================================
-# database.py
-# Phishing Awareness Analysis System
-# SQLite persistence layer — stores scan history and exposes
-# query helpers used by the dashboard and report generator.
-# =============================================================================
-
 import json
 import sqlite3
 from contextlib import contextmanager
@@ -14,9 +7,6 @@ import config
 from analyzer import AnalysisResult
 
 
-# ---------------------------------------------------------------------------
-# Schema DDL
-# ---------------------------------------------------------------------------
 
 _CREATE_SCANS_TABLE = """
 CREATE TABLE IF NOT EXISTS scans (
@@ -46,9 +36,6 @@ CREATE INDEX IF NOT EXISTS idx_scans_threat ON scans (threat_level);
 """
 
 
-# ---------------------------------------------------------------------------
-# Database manager
-# ---------------------------------------------------------------------------
 
 class DatabaseManager:
     """
@@ -66,9 +53,7 @@ class DatabaseManager:
         self._path = db_path
         self._initialise()
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Internal helpers
-    # ─────────────────────────────────────────────────────────────────────────
+
 
     @contextmanager
     def _connect(self) -> Generator[sqlite3.Connection, None, None]:
@@ -92,9 +77,6 @@ class DatabaseManager:
             conn.execute(_CREATE_IDX_TIMESTAMP)
             conn.execute(_CREATE_IDX_THREAT)
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Write operations
-    # ─────────────────────────────────────────────────────────────────────────
 
     def save_scan(self, result: AnalysisResult) -> int:
         """
@@ -145,9 +127,7 @@ class DatabaseManager:
             cursor = conn.execute("DELETE FROM scans")
             return cursor.rowcount
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Read operations
-    # ─────────────────────────────────────────────────────────────────────────
+  
 
     def get_recent_scans(self, limit: int = config.MAX_HISTORY_DISPLAY) -> list[dict[str, Any]]:
         """
@@ -257,9 +237,7 @@ class DatabaseManager:
             row = conn.execute("SELECT COUNT(*) AS n FROM scans").fetchone()
         return row["n"] if row else 0
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Deserialisation helper
-    # ─────────────────────────────────────────────────────────────────────────
+
 
     @staticmethod
     def _deserialise_row(row: sqlite3.Row) -> dict[str, Any]:
