@@ -21,7 +21,6 @@ def _apply_styles(root: tk.Tk) -> None:
 
     style = ttk.Style(root)
 
-    # Use a clean base theme available on all platforms
     available = style.theme_names()
     for preferred in ("clam", "alt", "default"):
         if preferred in available:
@@ -66,15 +65,12 @@ def _apply_styles(root: tk.Tk) -> None:
 def main() -> None:
     _check_python_version()
 
-    # Deferred imports so version check runs first
     import config
     from dashboard import Dashboard
 
     root = tk.Tk()
 
-    # ── Window icon (graceful fallback if file is absent) ────────────────────
     try:
-        # Place a shield_icon.ico / .png next to main.py for a custom icon.
         icon_path_ico = __file__.replace("main.py", "shield_icon.ico")
         icon_path_png = __file__.replace("main.py", "shield_icon.png")
         import os
@@ -86,7 +82,6 @@ def main() -> None:
     except Exception:
         pass  # No icon is fine
 
-    # ── Global exception handler ─────────────────────────────────────────────
     def _on_exception(exc_type, exc_value, exc_tb):
         import traceback
         err = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
@@ -100,13 +95,10 @@ def main() -> None:
 
     sys.excepthook = _on_exception
 
-    # ── Apply ttk styles ─────────────────────────────────────────────────────
     _apply_styles(root)
 
-    # ── Launch dashboard ─────────────────────────────────────────────────────
     Dashboard(root)
 
-    # ── Graceful close ───────────────────────────────────────────────────────
     def _on_close():
         if messagebox.askokcancel("Exit", "Exit the Phishing Awareness Analysis System?", parent=root):
             root.destroy()
